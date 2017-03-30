@@ -103,6 +103,8 @@ uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len);
 void CDC_flush(void);
 void CDC_disable_TIM_Interrupt(void);
 void CDC_enable_TIM_Interrupt(void);
+void CDC_enable_fast_usb_serial(void);
+void CDC_disable_fast_usb_serial(void);
 
 /* USER CODE BEGIN EXPORTED_FUNCTIONS  */
 /* USER CODE END  EXPORTED_FUNCTIONS */

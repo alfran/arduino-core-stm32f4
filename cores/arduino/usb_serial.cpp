@@ -66,9 +66,18 @@ USBSerial::USBSerial(void) {
 
 /* USBSerial is always available and instantiated in main.cpp */
 void USBSerial::begin(void) {
+  CDC_enable_fast_usb_serial();
 }
 
-void USBSerial::begin(int) {
+void USBSerial::begin(int speed) {
+  if(speed == 230400) // disabling fast USB Serial for ESP8266 Firmware Upgrade
+  {
+    CDC_disable_fast_usb_serial();
+  }
+  else
+  {
+    CDC_enable_fast_usb_serial();
+  }
 }
 
 void USBSerial::end(void) {

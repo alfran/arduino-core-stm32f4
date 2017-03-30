@@ -110,6 +110,7 @@ uint8_t cptlineState = 0;
 volatile uint32_t USB_received = 0;
 uint8_t USBBuffer[64];
 uint8_t USBPackSize;
+volatile uint32_t fast_usb_serial = 1;
 
 /* Default configuration: 115200, 8N1 */
 uint8_t lineSetup[] = {0x00, 0xc2, 0x01, 0x00, 0x00, 0x00, 0x08};
@@ -183,8 +184,8 @@ static int8_t CDC_Init_FS(void)
   /*##-4- Start the TIM Base generation in interrupt mode ####################*/
   /* Start Channel1 */
   HAL_TIM_Base_Start_IT(&TimHandle);
-//  /* USER CODE BEGIN 3 */
-//  /* Set Application Buffers */
+  /* USER CODE BEGIN 3 */
+  /* Set Application Buffers */
   USBD_CDC_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS, 1);
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, StackRxBufferFS);
 
@@ -257,9 +258,16 @@ static int8_t CDC_Control_FS  (uint8_t cmd, uint8_t* pbuf, uint16_t length)
   /*******************************************************************************/
   case CDC_SET_LINE_CODING:
     memcpy(lineSetup, pbuf, 7);
+    fast_usb_serial = 1;
 
-    if(*((uint32_t*)pbuf) == 1200){
+    if(*((uint32_t*)pbuf) == 1200) // 1200baud bootloader (DFU) trick
+    {
       dfu_request = 1;
+    }
+
+    if(*((uint32_t*)pbuf) == 230400) // disabling fast USB Serial for ESP8266 Firmware Upgrade
+    {
+      fast_usb_serial = 0;
     }
 
     break;
@@ -310,6 +318,11 @@ static int8_t CDC_Receive_FS (uint8_t* Buf, uint32_t *Len)
   memcpy(USBBuffer, Buf, USBPackSize);
 
   USB_received = 1;
+
+  if(fast_usb_serial) // disabling fast USB Serial if the baud rate is setted @230400baud for ESP8266 Firmware Upgrade
+  {
+    __HAL_TIM_SET_COUNTER(&TimHandle, ((CDC_POLLING_INTERVAL*1000) - 1));
+  }
 
   return (USBD_OK);
   /* USER CODE END 6 */
@@ -438,27 +451,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     }
   }
 
-  if(USB_received)
-  {
-    USB_received = 0;
-
-    if((USBPackSize > 0))
-    {
-      if(UserRxBufPtrIn + USBPackSize > APP_RX_DATA_SIZE)
-      {
-        memcpy(&UserRxBufferFS[UserRxBufPtrIn], &USBBuffer[0], (APP_RX_DATA_SIZE - UserRxBufPtrIn));
-        memcpy(&UserRxBufferFS[0], &USBBuffer[(APP_RX_DATA_SIZE - UserRxBufPtrIn)], (USBPackSize - (APP_RX_DATA_SIZE - UserRxBufPtrIn)));
-        UserRxBufPtrIn = ((UserRxBufPtrIn + USBPackSize) % APP_RX_DATA_SIZE);
-      } else
-      {
-        memcpy(&UserRxBufferFS[UserRxBufPtrIn], USBBuffer, USBPackSize);
-        UserRxBufPtrIn = ((UserRxBufPtrIn + USBPackSize) % APP_RX_DATA_SIZE);
-      }
-    }
-
-    USBD_CDC_ReceivePacket(&hUsbDeviceFS);
-  }
-
   if(UserTxBufPtrOut != UserTxBufPtrIn)
   {
     if(UserTxBufPtrOut > UserTxBufPtrIn) /* Roll-back */
@@ -493,6 +485,37 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
       }
     }
   }
+
+  if(USB_received)
+  {
+    USB_received = 0;
+
+    if((USBPackSize > 0))
+    {
+      if(UserRxBufPtrIn + USBPackSize > APP_RX_DATA_SIZE)
+      {
+        memcpy(&UserRxBufferFS[UserRxBufPtrIn], &USBBuffer[0], (APP_RX_DATA_SIZE - UserRxBufPtrIn));
+        memcpy(&UserRxBufferFS[0], &USBBuffer[(APP_RX_DATA_SIZE - UserRxBufPtrIn)], (USBPackSize - (APP_RX_DATA_SIZE - UserRxBufPtrIn)));
+        UserRxBufPtrIn = ((UserRxBufPtrIn + USBPackSize) % APP_RX_DATA_SIZE);
+      } else
+      {
+        memcpy(&UserRxBufferFS[UserRxBufPtrIn], USBBuffer, USBPackSize);
+        UserRxBufPtrIn = ((UserRxBufPtrIn + USBPackSize) % APP_RX_DATA_SIZE);
+      }
+    }
+
+    USBD_CDC_ReceivePacket(&hUsbDeviceFS);
+  }
+}
+
+void CDC_enable_fast_usb_serial(void)
+{
+  fast_usb_serial = 1;
+}
+
+void CDC_disable_fast_usb_serial(void)
+{
+  fast_usb_serial = 0;
 }
 
 /* USER CODE BEGIN PRIVATE_FUNCTIONS_IMPLEMENTATION */
