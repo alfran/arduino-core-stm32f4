@@ -1,3 +1,4 @@
+
 # Arduino STM32F4 Core and platform
 # ------------------------------
 #
@@ -5,7 +6,7 @@
 # https://github.com/arduino/Arduino/wiki/Arduino-IDE-1.5---3rd-party-Hardware-specification
 
 name=Arduino STM32F4 (32-bits ARM Cortex-M4) Boards
-version=1.0.1
+version=1.0.0
 
 # STM32F4 compiler variables
 # ------------------------
@@ -45,7 +46,8 @@ compiler.S.extra_flags=
 compiler.ar.extra_flags=
 compiler.elf2hex.extra_flags=
 
-compiler.libs.c.flags="-I{build.system.path}/libstm32f4" "-I{build.system.path}/libstm32f4/include" "-I{build.system.path}/Drivers/STM32F4xx_HAL_Driver/Inc/" "-I{build.system.path}/Drivers/CMSIS/Include/" "-I{build.system.path}/Drivers/CMSIS/Device/ST/STM32F4xx/Include" "-I{build.system.path}/Middlewares/ST/STM32_USB_Device_Library/Core/Inc" "-I{build.variant.path}/usb" "-I{build.system.path}/Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc/" "-I{build.system.path}/Drivers/BSP/Components" "-I{build.system.path}/Middlewares/Third_Party/FatFs/src"
+compiler.libs.c.flags="-I{build.system.path}/libstm32f4" "-I{build.system.path}/libstm32f4/include" "-I{build.system.path}/Drivers/STM32F4xx_HAL_Driver/Inc/" "-I{build.system.path}/Drivers/STM32F4xx_HAL_Driver/Src/"  "-I{build.system.path}/Drivers/CMSIS/Include/" "-I{build.system.path}/Drivers/CMSIS/Device/ST/STM32F4xx/Include" "-I{build.system.path}/Middlewares/ST/STM32_USB_Device_Library/Core/Inc" "-I{build.variant.path}/usb" "-I{build.system.path}/Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc/" "-I{build.system.path}/Drivers/BSP/Components" "-I{build.system.path}/Middlewares/Third_Party/FatFs/src"
+
 
 compiler.warning_flags=-w
 compiler.warning_flags.none=-w
@@ -89,13 +91,13 @@ recipe.size.regex.data=^(?:\.data|\.bss|\.noinit)\s+([0-9]+).*
 # DFU Util
 # --------
 
-tools.dfu-util.path={runtime.tools.dfu-util-0.8.0-stm32-arduino2.path}
+tools.dfu-util.path={runtime.tools.dfu-util-0.8.0-stm32-arduino1.path}
 tools.dfu-util.cmd=dfu-util
 tools.dfu-util.cmd.windows=dfu-util.cmd
 
 tools.dfu-util.upload.params.verbose=-v
 tools.dfu-util.upload.params.quiet=
-tools.dfu-util.upload.pattern="{path}/{cmd}" "{path}" {upload.usbID} {upload.altID} {upload.mem_start} "{build.path}/{build.project_name}.bin" "{serial.port}"
+tools.dfu-util.upload.pattern="{path}/{cmd}" "{path}" {upload.usbID} {upload.altID} {upload.mem_start} "{build.path}/{build.project_name}.bin"
 
 #
 # USB Flags
